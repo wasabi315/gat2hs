@@ -1,0 +1,4 @@
+name: gat
+include: src
+depend: agda2hs-base
+flags: --erasure --rewriting --no-projection-like
