@@ -1,3 +1,5 @@
+{-# OPTIONS --local-confluence-check #-}
+
 module Syntax where
 
 {-# FOREIGN AGDA2HS
@@ -7,7 +9,7 @@ module Syntax where
 
 #-}
 
-open import Agda.Builtin.Equality.Rewrite
+open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_⟩ )
 open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
 
 {-# FOREIGN AGDA2HS
@@ -57,7 +59,7 @@ postulate
 
   [][]T : A [ δ ]T [ σ ]T ≡ A [ δ ⨾ σ ]T
   {-# REWRITE [][]T #-}
-  [][]  : t [ δ ] [ σ ] ≡ t [ δ ⨾ σ ]
+  [][] : tmsub {A = ⟨ _ ⟩} (t [ δ ]) σ ≡ t [ δ ⨾ σ ]
   {-# REWRITE [][] #-}
 
 data Ctx where
@@ -95,13 +97,13 @@ postulate
   ▷β₂ : ssnd (δ , t) ≡ t
   {-# REWRITE ▷β₂ #-}
 
+  π₁⨾ : sfst δ ⨾ σ ≡ π₁ (δ ⨾ σ)
+  {-# REWRITE π₁⨾ #-}
+  π₂[] : tmsub {A = ⟨ _ ⟩} (ssnd δ) σ ≡ π₂ (δ ⨾ σ)
+  {-# REWRITE π₂[] #-}
+
   ▷η : sfst δ , ssnd δ ≡ δ
   {-# REWRITE ▷η #-}
-
-  π₁⨾ : sfst {A = A} δ ⨾ σ ≡ π₁ (δ ⨾ σ)
-  {-# REWRITE π₁⨾ #-}
-  π₂[] : ssnd {A = A} δ [ σ ] ≡ π₂ (δ ⨾ σ)
-  {-# REWRITE π₂[] #-}
 
 
 -- Dependent functions
@@ -126,19 +128,12 @@ _^_ : ∀ δ A → Sub (Δ ▷ (A [ δ ]T)) (Γ ▷ A)
 {-# COMPILE AGDA2HS _^_ #-}
 
 postulate
-  foo : tmsub (ssnd sid) (ssnoc sid (tmsub u δ)) ≡ tmsub u δ
-  {-# REWRITE foo #-}
-
-  bar : ssnoc {A = A} (sfst sid) (tmsub (ssnd sid) (ssnoc sid (ssnd sid))) ≡ id
-  {-# REWRITE bar #-}
-
-postulate
   Π[]   : Π A B [ δ ]T ≡ Π (A [ δ ]T) (B [ δ ^ A ]T)
   {-# REWRITE Π[] #-}
   lam[] : lam t [ δ ] ≡ lam (t [ δ ^ A ])
   {-# REWRITE lam[] #-}
   -- Unlike with unary application, we cannot derive naturality
-  app[] : {t : Tm Γ (Π A B)} {δ : Sub Δ Γ} → app t u [ δ ] ≡ app (t [ δ ]) (u [ δ ])
+  app[] : tmsub {A = ⟨ _ ⟩} (app t u) δ ≡ app (t [ δ ]) (u [ δ ])
   {-# REWRITE app[] #-}
 
   Πβ : app (lam t) u ≡ t [ id , u ]
@@ -178,17 +173,17 @@ app = App
 
 #-}
 
-{-# COMPILE AGDA2HS Ctx #-}
-{-# COMPILE AGDA2HS Sub existing #-}
-{-# COMPILE AGDA2HS Ty existing #-}
-{-# COMPILE AGDA2HS Tm existing #-}
-{-# COMPILE AGDA2HS sid existing #-}
+{-# COMPILE AGDA2HS Ctx            #-}
+{-# COMPILE AGDA2HS Sub   existing #-}
+{-# COMPILE AGDA2HS Ty    existing #-}
+{-# COMPILE AGDA2HS Tm    existing #-}
+{-# COMPILE AGDA2HS sid   existing #-}
 {-# COMPILE AGDA2HS scomp existing #-}
 {-# COMPILE AGDA2HS ssnoc existing #-}
-{-# COMPILE AGDA2HS sfst existing #-}
-{-# COMPILE AGDA2HS ssnd existing #-}
+{-# COMPILE AGDA2HS sfst  existing #-}
+{-# COMPILE AGDA2HS ssnd  existing #-}
 {-# COMPILE AGDA2HS tysub existing #-}
 {-# COMPILE AGDA2HS tmsub existing #-}
-{-# COMPILE AGDA2HS pi existing #-}
-{-# COMPILE AGDA2HS lam existing #-}
-{-# COMPILE AGDA2HS app existing #-}
+{-# COMPILE AGDA2HS pi    existing #-}
+{-# COMPILE AGDA2HS lam   existing #-}
+{-# COMPILE AGDA2HS app   existing #-}
