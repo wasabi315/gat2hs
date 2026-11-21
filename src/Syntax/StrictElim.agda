@@ -94,9 +94,9 @@ module _
   elimCtx : FO.Ctx → ctx
 
   postulate
-    elimSub : ∀ {@0 Δ Γ} → FO.Sub Δ Γ → sub (elimCtx Δ) (elimCtx Γ)
-    elimTy  : ∀ {@0 Γ} → FO.Ty Γ → ty (elimCtx Γ)
-    elimTm  : ∀ {@0 Γ A} → FO.Tm Γ A → tm (elimCtx Γ) (elimTy A)
+    elimSub : FO.Sub FO.Δ FO.Γ → sub (elimCtx FO.Δ) (elimCtx FO.Γ)
+    elimTy  : FO.Ty FO.Γ → ty (elimCtx FO.Γ)
+    elimTm  : FO.Tm FO.Γ FO.A → tm (elimCtx FO.Γ) (elimTy FO.A)
 
   elimCtx FO.CNil        = •
   elimCtx (FO.CSnoc g a) = elimCtx g ▷ elimTy a
@@ -105,6 +105,30 @@ module _
   {-# COMPILE AGDA2HS elimSub existing #-}
   {-# COMPILE AGDA2HS elimTy  existing #-}
   {-# COMPILE AGDA2HS elimTm  existing #-}
+
+  postulate
+    elimId : elimSub (FO.id {Γ = FO.Γ}) ≡ id
+    {-# REWRITE elimId #-}
+    elimComp : elimSub (FO.δ FO.⨾ FO.σ) ≡ elimSub FO.δ ⨾ elimSub FO.σ
+    {-# REWRITE elimComp #-}
+    elim[]T : elimTy (FO.A FO.[ FO.δ ]T) ≡ elimTy FO.A [ elimSub FO.δ ]T
+    {-# REWRITE elim[]T #-}
+    elim[] : elimTm (FO.t FO.[ FO.δ ]) ≡ elimTm FO.t [ elimSub FO.δ ]
+    {-# REWRITE elim[] #-}
+    elimε : elimSub (FO.ε {Δ = FO.Δ}) ≡ ε
+    {-# REWRITE elimε #-}
+    elim, : elimSub (FO.δ FO., FO.t) ≡ elimSub FO.δ , elimTm FO.t
+    {-# REWRITE elim, #-}
+    elimπ₁ : elimSub (FO.π₁ FO.δ) ≡ π₁ (elimSub FO.δ)
+    {-# REWRITE elimπ₁ #-}
+    elimπ₂ : elimTm (FO.π₂ FO.δ) ≡ π₂ (elimSub FO.δ)
+    {-# REWRITE elimπ₂ #-}
+    elimΠ : elimTy (FO.Π FO.A FO.B) ≡ Π (elimTy FO.A) (elimTy FO.B)
+    {-# REWRITE elimΠ #-}
+    elimLam : elimTm (FO.lam FO.t) ≡ lam (elimTm FO.t)
+    {-# REWRITE elimLam #-}
+    elimApp : elimTm (FO.app FO.t FO.u) ≡ app (elimTm FO.t) (elimTm FO.u)
+    {-# REWRITE elimApp #-}
 
 {-# FOREIGN AGDA2HS
 

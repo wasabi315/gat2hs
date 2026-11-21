@@ -56,6 +56,9 @@ esnd (ESnoc ρ t) = t
 
 π₂ = esnd; {-# INLINE esnd #-}
 
+▷η : (ρ : Env (Γ ▷ A[_])) → π₁ ρ , π₂ ρ ≡ ρ
+▷η (_ , _) = refl
+
 {-# FOREIGN AGDA2HS
 
 data Tel
