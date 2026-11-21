@@ -28,7 +28,7 @@ variable
   @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃  : Ty
   @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm _
   @0 A[_] B[_] : ？ → Ty
-  @0 t[_] u[_] : ？ → Tm _
+  @0 t[_] u[_] : (□ : ？) → Tm A[ □ ]
 
 -- Dependent functions
 -- We use binary application because it behaves better with rewriting
