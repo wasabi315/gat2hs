@@ -7,7 +7,7 @@ module Fo2So where
 
 #-}
 
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
 import Syntax as FO
 import SOSyntax as SO
 import SOSyntax.Tel as SO
