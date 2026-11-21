@@ -36,6 +36,8 @@ pattern _,_ δ t = ESnoc δ t
 @0 Env' TNil    = Env•
 @0 Env' (Γ ▷ A) = Env▷ (Env' Γ) (λ δ → Tm (A δ))
 
+-- Morally 'Env' is inductive family, but for positivity it must be defined
+-- by induction on telescopes.
 Env : @0 Tel → Type
 Env Γ = unsafe-resurrect (Env' Γ)
 
