@@ -118,61 +118,54 @@ app : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
 app t u = λ ρ → SO.app (t ρ) (u ρ)
 {-# COMPILE AGDA2HS app #-}
 
--- •η : δ ≡ ε
--- •η = {!   !}
+postulate
+  •η : {δ : Sub Γ •} → δ ≡ ε
+  Πη : {t : Tm Γ (Π A B)} → _≡_ {A = Tm Γ (Π A B)} t (λ ρ → SO.lam (SO.app (t ρ)))
 
 _ : {t : Tm (Γ ▷ A) B} {u : Tm Γ A}
   → app {B = B} (lam t) u ≡ λ ρ → SO.app (SO.lam (λ τ → t (ρ SO., τ))) (u ρ)
 _ = refl
 
--- Fail!
-_ : {t : Tm (Γ ▷ A) B} {u : Tm Γ A}
-  → app {B = B} (lam t) u ≡ (λ ρ → t (ρ SO., u ρ))
-_ = refl
-
--- Πη : _≡_ {A = Tm Γ (Π A B)} t (lam (app (λ ρ → t (SO.efst ρ)) SO.esnd))
--- Πη = {!   !}
-
 -- fo2soCtx : FO.Ctx → Ctx
 -- fo2soCtx =
 --   FO.elimCtx
 --     Ctx Sub Ty Tm
---     sid scomp refl refl refl
+--     id _⨾_ refl refl refl
 --     tysub tmsub refl refl refl refl
---     cnil csnoc
---     snil ssnoc sfst ssnd •η refl refl refl refl refl refl
---     pi lam app refl refl refl refl Πη
+--     • _▷_
+--     ε _,_ π₁ π₂ •η refl refl refl refl refl refl
+--     Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
 -- {-# COMPILE AGDA2HS fo2soCtx #-}
 
 -- fo2soSub : FO.Sub FO.Δ FO.Γ → Sub (fo2soCtx FO.Δ) (fo2soCtx FO.Γ)
 -- fo2soSub =
 --   FO.elimSub
 --     Ctx Sub Ty Tm
---     sid scomp refl refl refl
+--     id _⨾_ refl refl refl
 --     tysub tmsub refl refl refl refl
---     cnil csnoc
---     snil ssnoc sfst ssnd •η refl refl refl refl refl refl
---     pi lam app refl refl refl refl Πη
+--     • _▷_
+--     ε _,_ π₁ π₂ •η refl refl refl refl refl refl
+--     Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
 -- {-# COMPILE AGDA2HS fo2soSub #-}
 
 -- fo2soTy  : FO.Ty FO.Γ → Ty (fo2soCtx FO.Γ)
 -- fo2soTy =
 --   FO.elimTy
 --     Ctx Sub Ty Tm
---     sid scomp refl refl refl
+--     id _⨾_ refl refl refl
 --     tysub tmsub refl refl refl refl
---     cnil csnoc
---     snil ssnoc sfst ssnd •η refl refl refl refl refl refl
---     pi lam app refl refl refl refl Πη
+--     • _▷_
+--     ε _,_ π₁ π₂ •η refl refl refl refl refl refl
+--     Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
 -- {-# COMPILE AGDA2HS fo2soTy #-}
 
 -- fo2soTm  : FO.Tm FO.Γ FO.A → Tm (fo2soCtx FO.Γ) (fo2soTy FO.A)
 -- fo2soTm =
 --   FO.elimTm
 --     Ctx Sub Ty Tm
---     sid scomp refl refl refl
+--     id _⨾_ refl refl refl
 --     tysub tmsub refl refl refl refl
---     cnil csnoc
---     snil ssnoc sfst ssnd •η refl refl refl refl refl refl
---     pi lam app refl refl refl refl Πη
+--     • _▷_
+--     ε _,_ π₁ π₂ •η refl refl refl refl refl refl
+--     Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
 -- {-# COMPILE AGDA2HS fo2soTm #-}

@@ -58,6 +58,7 @@ esnd (ESnoc ρ t) = t
 
 ▷η : (ρ : Env (Γ ▷ A[_])) → π₁ ρ , π₂ ρ ≡ ρ
 ▷η (_ , _) = refl
+-- {-# REWRITE ▷η #-}
 
 {-# FOREIGN AGDA2HS
 
