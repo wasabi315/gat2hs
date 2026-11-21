@@ -2,6 +2,13 @@
 
 module Syntax.StrictElim where
 
+{-# FOREIGN AGDA2HS
+
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
+
+#-}
+
 open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_⟩ )
 open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
 import Syntax as FO
@@ -101,8 +108,72 @@ module _
 
 {-# FOREIGN AGDA2HS
 
-elimSub = _
-elimTy  = _
-elimTm  = _
+elimSub ::
+  sub -> (sub -> sub -> sub) ->
+  (ty -> sub -> ty) -> (tm -> sub -> tm) ->
+  ctx -> (ctx -> ty -> ctx) ->
+  sub -> (sub -> tm -> sub) ->
+  (sub -> sub) -> (sub -> tm) ->
+  (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
+  FO.Sub ->
+  sub
+elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app = \case
+  FO.SNil -> snil
+  FO.SId -> id
+  FO.SComp sub1 sub2 ->
+    comp
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub1)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub2)
+  FO.SSnoc sub t ->
+    ssnoc
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app t)
+  FO.SFst sub ->
+    sfst
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub)
+
+elimTy ::
+  sub -> (sub -> sub -> sub) ->
+  (ty -> sub -> ty) -> (tm -> sub -> tm) ->
+  ctx -> (ctx -> ty -> ctx) ->
+  sub -> (sub -> tm -> sub) ->
+  (sub -> sub) -> (sub -> tm) ->
+  (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
+  FO.Ty ->
+  ty
+elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app = \case
+  FO.TySub a sub ->
+    tysub
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app a)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub)
+  FO.Pi a b ->
+    pi
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app a)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app b)
+
+elimTm ::
+  sub -> (sub -> sub -> sub) ->
+  (ty -> sub -> ty) -> (tm -> sub -> tm) ->
+  ctx -> (ctx -> ty -> ctx) ->
+  sub -> (sub -> tm -> sub) ->
+  (sub -> sub) -> (sub -> tm) ->
+  (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
+  FO.Tm ->
+  tm
+elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app = \case
+  FO.TmSub t sub ->
+    tmsub
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app t)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub)
+  FO.SSnd sub ->
+    ssnd
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sub)
+  FO.Lam t ->
+    lam
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app t)
+  FO.App t u ->
+    app
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app u)
 
 #-}
