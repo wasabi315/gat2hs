@@ -148,9 +148,3 @@ lam t = λ ρ → SO.lam λ τ → t (ρ SO., τ)
 app : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
 app t u = λ ρ → SO.app (t ρ) (u ρ)
 {-# COMPILE AGDA2HS app #-}
-
--- postulate
---   fo2so• : fo2soCtx FO.• ≡ •
---   {-# REWRITE fo2so• #-}
---   fo2so▷ : fo2soCtx (FO.Γ FO.▷ FO.A) ≡ fo2soCtx FO.Γ ▷ fo2soTy FO.A
---   {-# REWRITE fo2so▷ #-}

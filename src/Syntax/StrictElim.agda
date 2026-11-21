@@ -6,6 +6,12 @@ open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_�
 open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
 import Syntax as FO
 
+{-# FOREIGN AGDA2HS
+
+import Syntax qualified as FO
+
+#-}
+
 --------------------------------------------------------------------------------
 
 module _
@@ -77,3 +83,26 @@ module _
   (@0 Πη : ∀ {@0 Γ A B} {@0 t : tm Γ (Π A B)}
     → t ≡ lam (app (t [ wk ]) vz))
   where
+
+  elimCtx : FO.Ctx → ctx
+
+  postulate
+    elimSub : ∀ {@0 Δ Γ} → FO.Sub Δ Γ → sub (elimCtx Δ) (elimCtx Γ)
+    elimTy  : ∀ {@0 Γ} → FO.Ty Γ → ty (elimCtx Γ)
+    elimTm  : ∀ {@0 Γ A} → FO.Tm Γ A → tm (elimCtx Γ) (elimTy A)
+
+  elimCtx FO.CNil        = •
+  elimCtx (FO.CSnoc g a) = elimCtx g ▷ elimTy a
+
+  {-# COMPILE AGDA2HS elimCtx          #-}
+  {-# COMPILE AGDA2HS elimSub existing #-}
+  {-# COMPILE AGDA2HS elimTy  existing #-}
+  {-# COMPILE AGDA2HS elimTm  existing #-}
+
+{-# FOREIGN AGDA2HS
+
+elimSub = _
+elimTy  = _
+elimTm  = _
+
+#-}
