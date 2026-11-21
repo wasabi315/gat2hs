@@ -4,11 +4,17 @@ import Agda.Builtin.Equality.Rewrite
 
 module Utils where
 
--- 'unsafe-resurrect' is obviously unsafe in generated Haskell code, but we
--- explicitly don't write a COMPILE pragma, so we get an error if we try to
--- include it in the compiled code anyway!
-{-# POLARITY unsafe-resurrect ++ ++ ++ #-}
+-- 'Resurrect' can be thought of a definitional version of the following record:
+--
+-- > record Resurrect (@0 A : Set) where
+-- >   field
+-- >     unwrap : A
+--
+-- 'Resurrect' is obviously unsafe in generated Haskell code, but we explicitly
+-- don't write a COMPILE pragma, so we get an error if we try to include it in
+-- the compiled code anyway!
+{-# POLARITY Resurrect ++ #-}
 postulate
-  unsafe-resurrect : ∀ {ℓ} {A : Set ℓ} → @0 A → A
-  unsafe-resurrect≡ : ∀ {ℓ} {A : Set ℓ} (x : A) → unsafe-resurrect x ≡ x
-  {-# REWRITE unsafe-resurrect≡ #-}
+  Resurrect : @0 Set → Set
+  Resurrect≡ : (A : Set) → Resurrect A ≡ A
+  {-# REWRITE Resurrect≡ #-}

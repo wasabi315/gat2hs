@@ -16,7 +16,7 @@ open import SOSyntax
 
 data Tel : Set
 
-@0 Env' : @0 Tel → Type
+Env' : Tel → Type
 
 data Tel where
   TNil  : Tel
@@ -33,13 +33,12 @@ data Env▷ (@0 A : Set) (@0 B : A → Set) : Set where
   ESnoc : (δ : A) → B δ → Env▷ A B
 pattern _,_ δ t = ESnoc δ t
 
-@0 Env' TNil    = Env•
-@0 Env' (Γ ▷ A) = Env▷ (Env' Γ) (λ δ → Tm (A δ))
+Env' TNil    = Env•
+Env' (Γ ▷ A) = Env▷ (Env' Γ) (λ δ → Tm (A δ))
 
--- Morally 'Env' is inductive family, but for positivity it must be defined
--- by induction on telescopes.
+-- Hack to compile the Env' inductive family to a non-positive datatype
 Env : @0 Tel → Type
-Env Γ = unsafe-resurrect (Env' Γ)
+Env Γ = resurrect (Env' Γ)
 
 variable
   @0 Γ Δ Θ : Tel
