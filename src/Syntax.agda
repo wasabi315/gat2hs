@@ -10,10 +10,10 @@ module Syntax where
 #-}
 
 open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_⟩ )
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
 
 {-# FOREIGN AGDA2HS
-import Prelude hiding ( pi, (^) )
+import Prelude hiding ( (^) )
 #-}
 
 --------------------------------------------------------------------------------
@@ -25,6 +25,12 @@ postulate
   Ty  : @0 Ctx → Type
   Tm  : (@0 Γ : Ctx) → @0 Ty Γ → Type
 
+data Ctx where
+  CNil  : Ctx
+  CSnoc : (Γ : Ctx) → Ty Γ → Ctx
+pattern • = CNil
+pattern _▷_ Γ A = CSnoc Γ A
+
 variable
   @0 Γ Δ Θ Λ Γ₁ Γ₂ Δ₁ Δ₂ Θ₁ Θ₂ : Ctx
   @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃  : Ty _
@@ -32,10 +38,11 @@ variable
   @0 δ σ γ δ₁ δ₂ : Sub _ _
 
 postulate
-  sid   : Sub Γ Γ
-  scomp : Sub Δ Γ → Sub Θ Δ → Sub Θ Γ
-syntax sid = id
-syntax scomp δ σ = δ ⨾ σ
+  SId   : Sub Γ Γ
+  SComp : Sub Δ Γ → Sub Θ Δ → Sub Θ Γ
+
+id  = SId; {-# INLINE id #-}
+_⨾_ = SComp; {-# INLINE _⨾_ #-}
 
 postulate
   id⨾ : id ⨾ δ ≡ δ
@@ -46,10 +53,12 @@ postulate
   {-# REWRITE ⨾⨾ #-}
 
 postulate
-  tysub : Ty Γ → Sub Δ Γ → Ty Δ
-  tmsub : Tm Γ A → ∀ δ → Tm Δ (A [ δ ]T)
-syntax tysub A δ = A [ δ ]T
-syntax tmsub t δ = t [ δ ]
+  TySub : Ty Γ → Sub Δ Γ → Ty Δ
+_[_]T = TySub; {-# INLINE _[_]T #-}
+
+postulate
+  TmSub : Tm Γ A → ∀ δ → Tm Δ (A [ δ ]T)
+_[_] = TmSub; {-# INLINE _[_] #-}
 
 postulate
   [id]T : A [ id ]T ≡ A
@@ -59,61 +68,57 @@ postulate
 
   [][]T : A [ δ ]T [ σ ]T ≡ A [ δ ⨾ σ ]T
   {-# REWRITE [][]T #-}
-  [][] : tmsub {A = ⟨ _ ⟩} (t [ δ ]) σ ≡ t [ δ ⨾ σ ]
+
+  [][] : TmSub {A = ⟨ _ ⟩} (t [ δ ]) σ ≡ t [ δ ⨾ σ ]
   {-# REWRITE [][] #-}
-
-data Ctx where
-  CNil  : Ctx
-  CSnoc : (Γ : Ctx) → Ty Γ → Ctx
-
-syntax CNil = •
-syntax CSnoc Γ A = Γ ▷ A
 
 -- Context comprehension
 postulate
-  snil  : Sub Δ •
-syntax snil = ε
+  SNil  : Sub Δ •
+ε = SNil; {-# INLINE ε #-}
+
 postulate
   •η : δ ≡ ε
 
-  ssnoc : (δ : Sub Δ Γ) → Tm Δ (A [ δ ]T) → Sub Δ (Γ ▷ A)
-syntax ssnoc δ t = δ , t
+postulate
+  SSnoc : (δ : Sub Δ Γ) → Tm Δ (A [ δ ]T) → Sub Δ (Γ ▷ A)
+_,_ = SSnoc; {-# INLINE _,_ #-}
 
 postulate
-  sfst  : Sub Δ (Γ ▷ A) → Sub Δ Γ
-π₁ = sfst
-{-# COMPILE AGDA2HS π₁ inline #-}
+  SFst  : Sub Δ (Γ ▷ A) → Sub Δ Γ
+π₁ = SFst; {-# INLINE π₁ #-}
 
 postulate
-  ssnd  : (δ : Sub Δ (Γ ▷ A)) → Tm Δ (A [ π₁ δ ]T)
-π₂ = ssnd
-{-# COMPILE AGDA2HS π₂ inline #-}
+  SSnd  : (δ : Sub Δ (Γ ▷ A)) → Tm Δ (A [ π₁ δ ]T)
+π₂ = SSnd; {-# INLINE π₂ #-}
 
 postulate
   ,⨾  : (δ , t) ⨾ σ ≡ (δ ⨾ σ) , (t [ σ ])
   {-# REWRITE ,⨾ #-}
-  ▷β₁ : sfst (δ , t) ≡ δ
+  ▷β₁ : SFst (δ , t) ≡ δ
   {-# REWRITE ▷β₁ #-}
-  ▷β₂ : ssnd (δ , t) ≡ t
+  ▷β₂ : SSnd (δ , t) ≡ t
   {-# REWRITE ▷β₂ #-}
 
-  π₁⨾ : sfst δ ⨾ σ ≡ π₁ (δ ⨾ σ)
+  π₁⨾ : π₁ δ ⨾ σ ≡ π₁ (δ ⨾ σ)
   {-# REWRITE π₁⨾ #-}
-  π₂[] : tmsub {A = ⟨ _ ⟩} (ssnd δ) σ ≡ π₂ (δ ⨾ σ)
+  π₂[] : TmSub {A = ⟨ _ ⟩} (π₂ δ) σ ≡ π₂ (δ ⨾ σ)
   {-# REWRITE π₂[] #-}
 
-  ▷η : sfst δ , ssnd δ ≡ δ
+  ▷η : π₁ δ , π₂ δ ≡ δ
   {-# REWRITE ▷η #-}
-
 
 -- Dependent functions
 -- We use binary application because it behaves better with rewriting
 postulate
-  pi    : ∀ A → Ty (Γ ▷ A) → Ty Γ
-  lam   : Tm (Γ ▷ A) B → Tm Γ (Π A B)
-  app   : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
+  Pi    : ∀ A → Ty (Γ ▷ A) → Ty Γ
+Π = Pi; {-# INLINE Π #-}
 
-syntax pi = Π
+postulate
+  Lam   : Tm (Γ ▷ A) B → Tm Γ (Π A B)
+  App   : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
+lam = Lam; {-# INLINE lam #-}
+app = App; {-# INLINE app #-}
 
 wk : Sub (Γ ▷ A) Γ
 wk = π₁ id
@@ -132,8 +137,8 @@ postulate
   {-# REWRITE Π[] #-}
   lam[] : lam t [ δ ] ≡ lam (t [ δ ^ A ])
   {-# REWRITE lam[] #-}
-  -- Unlike with unary application, we cannot derive naturality
-  app[] : tmsub {A = ⟨ _ ⟩} (app t u) δ ≡ app (t [ δ ]) (u [ δ ])
+  -- Unlike with unary Application, we cannot derive naturality
+  app[] : TmSub {A = ⟨ _ ⟩} (app t u) δ ≡ app (t [ δ ]) (u [ δ ])
   {-# REWRITE app[] #-}
 
   Πβ : app (lam t) u ≡ t [ id , u ]
@@ -159,31 +164,32 @@ data Tm
   | Lam Tm
   | App Tm Tm
 
-snil = SNil
-sid = SId
-scomp = SComp
-ssnoc = SSnoc
-sfst = SFst
-ssnd = SSnd
-tysub = TySub
-tmsub = TmSub
-pi = Pi
-lam = Lam
-app = App
-
 #-}
 
 {-# COMPILE AGDA2HS Ctx            #-}
 {-# COMPILE AGDA2HS Sub   existing #-}
 {-# COMPILE AGDA2HS Ty    existing #-}
 {-# COMPILE AGDA2HS Tm    existing #-}
-{-# COMPILE AGDA2HS sid   existing #-}
-{-# COMPILE AGDA2HS scomp existing #-}
-{-# COMPILE AGDA2HS ssnoc existing #-}
-{-# COMPILE AGDA2HS sfst  existing #-}
-{-# COMPILE AGDA2HS ssnd  existing #-}
-{-# COMPILE AGDA2HS tysub existing #-}
-{-# COMPILE AGDA2HS tmsub existing #-}
-{-# COMPILE AGDA2HS pi    existing #-}
-{-# COMPILE AGDA2HS lam   existing #-}
-{-# COMPILE AGDA2HS app   existing #-}
+{-# COMPILE AGDA2HS SId   existing #-}
+{-# COMPILE AGDA2HS SNil  existing #-}
+{-# COMPILE AGDA2HS SComp existing #-}
+{-# COMPILE AGDA2HS SSnoc existing #-}
+{-# COMPILE AGDA2HS SFst  existing #-}
+{-# COMPILE AGDA2HS SSnd  existing #-}
+{-# COMPILE AGDA2HS TySub existing #-}
+{-# COMPILE AGDA2HS TmSub existing #-}
+{-# COMPILE AGDA2HS Pi    existing #-}
+{-# COMPILE AGDA2HS Lam   existing #-}
+{-# COMPILE AGDA2HS App   existing #-}
+
+{-# COMPILE AGDA2HS id    inline #-}
+{-# COMPILE AGDA2HS _⨾_   inline #-}
+{-# COMPILE AGDA2HS _[_]T inline #-}
+{-# COMPILE AGDA2HS _[_]  inline #-}
+{-# COMPILE AGDA2HS ε     inline #-}
+{-# COMPILE AGDA2HS _,_   inline #-}
+{-# COMPILE AGDA2HS π₁    inline #-}
+{-# COMPILE AGDA2HS π₂    inline #-}
+{-# COMPILE AGDA2HS Π     inline #-}
+{-# COMPILE AGDA2HS lam   inline #-}
+{-# COMPILE AGDA2HS app   inline #-}

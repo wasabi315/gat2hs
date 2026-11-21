@@ -3,7 +3,7 @@ LIBRARIES =
 
 .PHONY: app clean clean-lib clean-agdai
 
-lib: src/GAT.agda
+lib: src/Everything.agda
 	agda2hs $(FLAGS) $(LIBRARIES) $< -o lib
 
 clean: clean-lib clean-agdai
