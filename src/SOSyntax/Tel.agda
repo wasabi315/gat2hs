@@ -38,7 +38,7 @@ Env' (Γ ▷ A) = Env▷ (Env' Γ) (λ δ → Tm (A δ))
 
 -- Hack to compile the Env' inductive family to a non-positive datatype
 Env : @0 Tel → Type
-Env Γ = resurrect (Env' Γ)
+Env Γ = Resurrect (Env' Γ)
 
 variable
   @0 Γ Δ Θ : Tel
