@@ -23,7 +23,9 @@ library
     import:           warnings
     exposed-modules:  Syntax
                       SOSyntax
+                      SOSyntax.Tel
                       Fo2So
+                      Everything
     build-depends:    base >=4.21 && <5
                     , containers
     hs-source-dirs:   lib
