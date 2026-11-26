@@ -67,11 +67,23 @@ postulate
   Ση : pair (fst t) (snd t) ≡ t
   {-# REWRITE Ση #-}
 
+postulate
+  U    : Ty
+  El   : Tm U → Ty
+  Code : Ty → Tm U
+
+  Uβ : El (Code A) ≡ A
+  {-# REWRITE Uβ #-}
+  Uη : Code (El t) ≡ t
+  {-# REWRITE Uη #-}
+
 {-# FOREIGN AGDA2HS
 
 data Ty
   = Pi Ty (Tm -> Ty)
   | Sigma Ty (Tm -> Ty)
+  | U
+  | El Tm
 
 data Tm
   = Lam (Tm -> Tm)
@@ -79,6 +91,7 @@ data Tm
   | Pair Tm Tm
   | Fst Tm
   | Snd Tm
+  | Code Ty
 
 #-}
 
@@ -91,6 +104,9 @@ data Tm
 {-# COMPILE AGDA2HS Pair  existing #-}
 {-# COMPILE AGDA2HS Fst   existing #-}
 {-# COMPILE AGDA2HS Snd   existing #-}
+{-# COMPILE AGDA2HS U     existing #-}
+{-# COMPILE AGDA2HS El    existing #-}
+{-# COMPILE AGDA2HS Code  existing #-}
 
 {-# COMPILE AGDA2HS Π    inline #-}
 {-# COMPILE AGDA2HS lam  inline #-}

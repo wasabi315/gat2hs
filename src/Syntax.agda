@@ -1,4 +1,4 @@
--- {-# OPTIONS --local-confluence-check #-}
+{-# OPTIONS --local-confluence-check #-}
 
 module Syntax where
 
@@ -176,6 +176,24 @@ postulate
   Ση : pair B (fst t) (snd t) ≡ t
   {-# REWRITE Ση #-}
 
+-- Type-in-type universe (TODO: stratify)
+postulate
+  U    : Ty Γ
+  El   : Tm Γ U → Ty Γ
+  Code : Ty Γ → Tm Γ U
+
+  U[] : U [ δ ]T ≡ U
+  {-# REWRITE U[] #-}
+  El[] : El t [ δ ]T ≡ El (t [ δ ])
+  {-# REWRITE El[] #-}
+  Code[] : Code A [ δ ] ≡ Code (A [ δ ]T)
+  {-# REWRITE Code[] #-}
+
+  Uβ : El (Code A) ≡ A
+  {-# REWRITE Uβ #-}
+  Uη : Code (El t) ≡ t
+  {-# REWRITE Uη #-}
+
 {-# FOREIGN AGDA2HS
 
 data Sub
@@ -189,6 +207,8 @@ data Ty
   = TySub Ty Sub
   | Pi Ty Ty
   | Sigma Ty Ty
+  | U
+  | El Tm
 
 data Tm
   = TmSub Tm Sub
@@ -198,6 +218,7 @@ data Tm
   | Pair Tm Tm
   | Fst Tm
   | Snd Tm
+  | Code Ty
 
 #-}
 
@@ -220,6 +241,9 @@ data Tm
 {-# COMPILE AGDA2HS Pair  existing #-}
 {-# COMPILE AGDA2HS Fst   existing #-}
 {-# COMPILE AGDA2HS Snd   existing #-}
+{-# COMPILE AGDA2HS U     existing #-}
+{-# COMPILE AGDA2HS El    existing #-}
+{-# COMPILE AGDA2HS Code  existing #-}
 
 {-# COMPILE AGDA2HS id    inline #-}
 {-# COMPILE AGDA2HS _⨾_   inline #-}

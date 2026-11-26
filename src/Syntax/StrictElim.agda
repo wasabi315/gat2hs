@@ -112,6 +112,22 @@ module Elim
     → snd (pair B t u) ≡ u)
   (@0 @rewrite Ση : ∀ {@0 Γ A B} {@0 t : tm Γ (Σ A B)}
     → pair B (fst t) (snd t) ≡ t)
+
+  (u : ∀ {@0 Γ} → ty Γ)
+  (el : ∀ {@0 Γ} → tm Γ u → ty Γ)
+  (code : ∀ {@0 Γ} → ty Γ → tm Γ u)
+
+  (@0 @rewrite U[] : ∀ {@0 Δ Γ} {@0 δ : sub Δ Γ}
+    → u [ δ ]T ≡ u)
+  (@0 @rewrite El[] : ∀ {@0 Δ Γ} {@0 t : tm Γ u} {@0 δ : sub Δ Γ}
+    → el t [ δ ]T ≡ el (t [ δ ]))
+  (@0 @rewrite Code[] : ∀ {@0 Δ Γ} {@0 A : ty Γ} {@0 δ : sub Δ Γ}
+    → code A [ δ ] ≡ code (A [ δ ]T))
+
+  (@0 @rewrite Uβ : ∀ {@0 Γ} {@0 A : ty Γ}
+    → el (code A) ≡ A)
+  (@0 @rewrite Uη : ∀ {@0 Γ} {@0 t : tm Γ u}
+    → code (el t) ≡ t)
   where
 
   elimCtx : FO.Ctx → ctx
@@ -160,6 +176,12 @@ module Elim
     {-# REWRITE elimFst #-}
     elimSnd : elimTm (FO.snd FO.t) ≡ snd (elimTm FO.t)
     {-# REWRITE elimSnd #-}
+    elimU : elimTy (FO.U {FO.Γ}) ≡ u
+    {-# REWRITE elimU #-}
+    elimEl : elimTy (FO.El FO.t) ≡ el (elimTm FO.t)
+    {-# REWRITE elimEl #-}
+    elimCode : elimTm (FO.Code FO.A) ≡ code (elimTy FO.A)
+    {-# REWRITE elimCode #-}
 
 {-# FOREIGN AGDA2HS
 
@@ -171,22 +193,22 @@ elimSub ::
   (sub -> sub) -> (sub -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm -> tm) -> (tm -> tm) -> (tm -> tm) ->
-  FO.Sub ->
-  sub
-elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd = \case
+  ty -> (tm -> ty) -> (ty -> tm) ->
+  FO.Sub -> sub
+elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code = \case
   FO.SNil -> snil
   FO.SId -> id
   FO.SComp sub1 sub2 ->
     comp
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub1)
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub2)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub1)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub2)
   FO.SSnoc sub t ->
     ssnoc
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub)
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
   FO.SFst sub ->
     sfst
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub)
 
 elimTy ::
   sub -> (sub -> sub -> sub) ->
@@ -196,21 +218,25 @@ elimTy ::
   (sub -> sub) -> (sub -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm -> tm) -> (tm -> tm) -> (tm -> tm) ->
-  FO.Ty ->
-  ty
-elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd = \case
+  ty -> (tm -> ty) -> (ty -> tm) ->
+  FO.Ty -> ty
+elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code = \case
   FO.TySub a sub ->
     tysub
-      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd a)
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code a)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub)
   FO.Pi a b ->
     pi
-      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd a)
-      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd b)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code a)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code b)
   FO.Sigma a b ->
     sigma
-      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd a)
-      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd b)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code a)
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code b)
+  FO.U -> _U
+  FO.El t ->
+    el
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
 
 elimTm ::
   sub -> (sub -> sub -> sub) ->
@@ -220,32 +246,35 @@ elimTm ::
   (sub -> sub) -> (sub -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm) -> (tm -> tm -> tm) ->
   (ty -> ty -> ty) -> (tm -> tm -> tm) -> (tm -> tm) -> (tm -> tm) ->
-  FO.Tm ->
-  tm
-elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd = \case
+  ty -> (tm -> ty) -> (ty -> tm) ->
+  FO.Tm -> tm
+elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code = \case
   FO.TmSub t sub ->
     tmsub
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub)
   FO.SSnd sub ->
     ssnd
-      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd sub)
+      (elimSub id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code sub)
   FO.Lam t ->
     lam
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
   FO.App t u ->
     app
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd u)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code u)
   FO.Pair t u ->
     pair
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd u)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code u)
   FO.Fst t ->
     fst
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
   FO.Snd t ->
     snd
-      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd t)
+      (elimTm id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code t)
+  FO.Code a ->
+    code
+      (elimTy id comp tysub tmsub cnil csnoc snil ssnoc sfst ssnd pi lam app sigma pair fst snd _U el code a)
 
 #-}

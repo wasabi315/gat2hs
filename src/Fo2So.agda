@@ -144,6 +144,18 @@ snd : (t : Tm Γ (Σ A B)) → Tm Γ (B [ id , fst t ]T)
 snd t = λ ρ → SO.snd (t ρ)
 {-# COMPILE AGDA2HS snd #-}
 
+_U : Ty Γ
+_U = λ ρ → SO.U
+{-# COMPILE AGDA2HS _U #-}
+
+el : Tm Γ _U → Ty Γ
+el t = λ ρ → SO.El (t ρ)
+{-# COMPILE AGDA2HS el #-}
+
+code : Ty Γ → Tm Γ _U
+code a = λ ρ → SO.Code (a ρ)
+{-# COMPILE AGDA2HS code #-}
+
 module Fo2So =
   Elim Ctx Sub Ty Tm
        id _⨾_ refl refl refl
@@ -154,6 +166,7 @@ module Fo2So =
        ε (λ δ t → δ , t) π₁ π₂ •η refl refl refl refl refl refl
        Π lam app refl refl refl refl Πη
        Σ pair fst snd refl refl refl refl refl refl refl
+       _U el code refl refl refl refl refl
 
 fo2soCtx : FO.Ctx → Ctx
 fo2soCtx = Fo2So.elimCtx
