@@ -11,7 +11,7 @@ import SOSyntax
 
 open import Utils
 open import Agda.Builtin.Equality.Rewrite
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; init; last )
 open import SOSyntax
 
 data Tel : Set
@@ -29,8 +29,15 @@ data Env• : Set where
   ENil : Env•
 pattern ε = ENil
 
-data Env▷ (@0 A : Set) (@0 B : A → Set) : Set where
-  ESnoc : (δ : A) → B δ → Env▷ A B
+-- justifiable because the guarded under pattern matching on the context
+{-# ETA_EQUALITY #-}
+record Env▷ (@0 A : Set) (@0 B : A → Set) : Set where
+  inductive
+  constructor ESnoc
+  field
+    init : A
+    last : B init
+
 pattern _,_ δ t = ESnoc δ t
 
 Env' TNil    = Env•
@@ -55,10 +62,6 @@ esnd (ESnoc ρ t) = t
 {-# COMPILE AGDA2HS esnd #-}
 
 π₂ = esnd; {-# INLINE esnd #-}
-
-▷η : (ρ : Env (Γ ▷ A[_])) → π₁ ρ , π₂ ρ ≡ ρ
-▷η (_ , _) = refl
--- {-# REWRITE ▷η #-}
 
 {-# FOREIGN AGDA2HS
 
