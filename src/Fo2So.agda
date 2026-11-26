@@ -9,7 +9,7 @@ module Fo2So where
 
 #-}
 
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi; fst; snd )
 import Syntax as FO
 open import Syntax.StrictElim
 import SOSyntax as SO
@@ -17,7 +17,7 @@ import SOSyntax.Tel as SO
 
 {-# FOREIGN AGDA2HS
 
-import Prelude hiding ( pi, id, (^) )
+import Prelude hiding ( pi, id, (^), fst, snd )
 import Syntax qualified as FO
 
 #-}
@@ -126,6 +126,23 @@ _ : {t : Tm (Γ ▷ A) B} {u : Tm Γ A}
   → app {B = B} (lam t) u ≡ λ ρ → SO.app (SO.lam (λ τ → t (ρ SO., τ))) (u ρ)
 _ = refl
 
+sigma : ∀ A → Ty (Γ ▷ A) → Ty Γ
+sigma a b = λ ρ → SO.Σ (a ρ) λ τ → b (ρ SO., τ)
+{-# COMPILE AGDA2HS sigma #-}
+Σ = sigma
+{-# COMPILE AGDA2HS Σ inline #-}
+
+pair : (@0 B : Ty (Γ ▷ A)) → (t : Tm Γ A) → Tm Γ (B [ id , t ]T) → Tm Γ (Σ A B)
+pair B t u = λ ρ → SO.pair (t ρ) (u ρ)
+{-# COMPILE AGDA2HS pair #-}
+
+fst : Tm Γ (Σ A B) → Tm Γ A
+fst t = λ ρ → SO.fst (t ρ)
+{-# COMPILE AGDA2HS fst #-}
+
+snd : (t : Tm Γ (Σ A B)) → Tm Γ (B [ id , fst t ]T)
+snd t = λ ρ → SO.snd (t ρ)
+{-# COMPILE AGDA2HS snd #-}
 
 module Fo2So =
   Elim Ctx Sub Ty Tm
@@ -136,6 +153,7 @@ module Fo2So =
        -- to generate correct Haskell code. Is this an agda2hs bug?
        ε (λ δ t → δ , t) π₁ π₂ •η refl refl refl refl refl refl
        Π lam app refl refl refl refl Πη
+       Σ pair fst snd refl refl refl refl refl refl refl
 
 fo2soCtx : FO.Ctx → Ctx
 fo2soCtx = Fo2So.elimCtx

@@ -1,4 +1,4 @@
-{-# OPTIONS --local-confluence-check #-}
+-- {-# OPTIONS --local-confluence-check #-}
 
 module Syntax where
 
@@ -10,7 +10,7 @@ module Syntax where
 #-}
 
 open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_⟩ )
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; fst; snd )
 
 {-# FOREIGN AGDA2HS
 import Prelude hiding ( (^) )
@@ -145,6 +145,37 @@ postulate
   {-# REWRITE Πβ #-}
   Πη : {t : Tm Γ (Π A B)} → t ≡ lam (app (t [ wk ]) vz)
 
+-- Dependent pairs
+postulate
+  Sigma : (A : Ty Γ) → Ty (Γ ▷ A) → Ty Γ
+Σ = Sigma; {-# INLINE Σ #-}
+
+postulate
+  Pair : (@0 B : Ty (Γ ▷ A)) → (t : Tm Γ A) → Tm Γ (B [ id , t ]T) → Tm Γ (Σ A B)
+  Fst  : Tm Γ (Σ A B) → Tm Γ A
+  Snd  : (t : Tm Γ (Σ A B)) → Tm Γ (B [ id , Fst t ]T)
+pair = Pair; {-# INLINE pair #-}
+fst  = Fst;  {-# INLINE fst  #-}
+snd  = Snd;  {-# INLINE snd  #-}
+
+postulate
+  Σ[]  : Σ A B [ δ ]T ≡ Σ (A [ δ ]T) (B [ δ ^ A ]T)
+  {-# REWRITE Σ[] #-}
+  pair[] : {δ : Sub Δ Γ}
+         → pair B t u [ δ ] ≡ pair (B [ δ ^ A ]T) (t [ δ ]) (u [ δ ])
+  {-# REWRITE pair[] #-}
+  fst[] : fst {B = B} t [ δ ] ≡ fst (t [ δ ])
+  {-# REWRITE fst[] #-}
+  snd[] : {δ : Sub Δ Γ} → _[_] {A = ⟨ _ ⟩} (snd t) δ ≡ snd (t [ δ ])
+  {-# REWRITE snd[] #-}
+
+  Σβ₁ : fst (pair B t u) ≡ t
+  {-# REWRITE Σβ₁ #-}
+  Σβ₂ : snd (pair B t u) ≡ u
+  {-# REWRITE Σβ₂ #-}
+  Ση : pair B (fst t) (snd t) ≡ t
+  {-# REWRITE Ση #-}
+
 {-# FOREIGN AGDA2HS
 
 data Sub
@@ -157,12 +188,16 @@ data Sub
 data Ty
   = TySub Ty Sub
   | Pi Ty Ty
+  | Sigma Ty Ty
 
 data Tm
   = TmSub Tm Sub
   | SSnd Sub
   | Lam Tm
   | App Tm Tm
+  | Pair Tm Tm
+  | Fst Tm
+  | Snd Tm
 
 #-}
 
@@ -181,6 +216,10 @@ data Tm
 {-# COMPILE AGDA2HS Pi    existing #-}
 {-# COMPILE AGDA2HS Lam   existing #-}
 {-# COMPILE AGDA2HS App   existing #-}
+{-# COMPILE AGDA2HS Sigma existing #-}
+{-# COMPILE AGDA2HS Pair  existing #-}
+{-# COMPILE AGDA2HS Fst   existing #-}
+{-# COMPILE AGDA2HS Snd   existing #-}
 
 {-# COMPILE AGDA2HS id    inline #-}
 {-# COMPILE AGDA2HS _⨾_   inline #-}
@@ -193,3 +232,7 @@ data Tm
 {-# COMPILE AGDA2HS Π     inline #-}
 {-# COMPILE AGDA2HS lam   inline #-}
 {-# COMPILE AGDA2HS app   inline #-}
+{-# COMPILE AGDA2HS Σ     inline #-}
+{-# COMPILE AGDA2HS pair  inline #-}
+{-# COMPILE AGDA2HS fst   inline #-}
+{-# COMPILE AGDA2HS snd   inline #-}
