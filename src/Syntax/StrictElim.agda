@@ -21,7 +21,7 @@ import Syntax qualified as FO
 
 --------------------------------------------------------------------------------
 
-module _
+module Elim
   (ctx : Type) (sub : @0 ctx → @0 ctx → Type)
   (ty : @0 ctx → Type) (tm : (@0 Γ : ctx) → @0 ty Γ → Type)
 
@@ -98,8 +98,8 @@ module _
     elimTy  : FO.Ty FO.Γ → ty (elimCtx FO.Γ)
     elimTm  : FO.Tm FO.Γ FO.A → tm (elimCtx FO.Γ) (elimTy FO.A)
 
-  elimCtx FO.CNil        = •
-  elimCtx (FO.CSnoc g a) = elimCtx g ▷ elimTy a
+  elimCtx FO.•       = •
+  elimCtx (g FO.▷ a) = elimCtx g ▷ elimTy a
 
   {-# COMPILE AGDA2HS elimCtx          #-}
   {-# COMPILE AGDA2HS elimSub existing #-}

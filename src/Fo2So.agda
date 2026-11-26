@@ -11,7 +11,7 @@ module Fo2So where
 
 open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi )
 import Syntax as FO
-import Syntax.StrictElim as FO
+open import Syntax.StrictElim
 import SOSyntax as SO
 import SOSyntax.Tel as SO
 
@@ -126,46 +126,29 @@ _ : {t : Tm (Γ ▷ A) B} {u : Tm Γ A}
   → app {B = B} (lam t) u ≡ λ ρ → SO.app (SO.lam (λ τ → t (ρ SO., τ))) (u ρ)
 _ = refl
 
+
+module Fo2So =
+  Elim Ctx Sub Ty Tm
+       id _⨾_ refl refl refl
+       tysub tmsub refl refl refl refl
+       • _▷_
+       -- TODO: For some reason, it appears we have to eta-expand '_,_' here
+       -- to generate correct Haskell code. Is this an agda2hs bug?
+       ε (λ δ t → δ , t) π₁ π₂ •η refl refl refl refl refl refl
+       Π lam app refl refl refl refl Πη
+
 fo2soCtx : FO.Ctx → Ctx
-fo2soCtx =
-  FO.elimCtx
-    Ctx Sub Ty Tm
-    id _⨾_ refl refl refl
-    tysub tmsub refl refl refl refl
-    • _▷_
-    ε _,_ π₁ π₂ •η refl refl refl refl refl refl
-    Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
+fo2soCtx = Fo2So.elimCtx
 {-# COMPILE AGDA2HS fo2soCtx #-}
 
 fo2soSub : FO.Sub FO.Δ FO.Γ → Sub (fo2soCtx FO.Δ) (fo2soCtx FO.Γ)
-fo2soSub =
-  FO.elimSub
-    Ctx Sub Ty Tm
-    id _⨾_ refl refl refl
-    tysub tmsub refl refl refl refl
-    • _▷_
-    ε _,_ π₁ π₂ •η refl refl refl refl refl refl
-    Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
+fo2soSub = Fo2So.elimSub
 {-# COMPILE AGDA2HS fo2soSub #-}
 
-fo2soTy  : FO.Ty FO.Γ → Ty (fo2soCtx FO.Γ)
-fo2soTy =
-  FO.elimTy
-    Ctx Sub Ty Tm
-    id _⨾_ refl refl refl
-    tysub tmsub refl refl refl refl
-    • _▷_
-    ε _,_ π₁ π₂ •η refl refl refl refl refl refl
-    Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
+fo2soTy : FO.Ty FO.Γ → Ty (fo2soCtx FO.Γ)
+fo2soTy = Fo2So.elimTy
 {-# COMPILE AGDA2HS fo2soTy #-}
 
 fo2soTm  : FO.Tm FO.Γ FO.A → Tm (fo2soCtx FO.Γ) (fo2soTy FO.A)
-fo2soTm =
-  FO.elimTm
-    Ctx Sub Ty Tm
-    id _⨾_ refl refl refl
-    tysub tmsub refl refl refl refl
-    • _▷_
-    ε _,_ π₁ π₂ •η refl refl refl refl refl refl
-    Π lam (λ {Γ} {A} {B} → app {Γ} {A} {B}) refl refl refl refl (λ {Γ} {A} {B} {t} → Πη {Γ} {A} {B} {t})
+fo2soTm = Fo2So.elimTm
 {-# COMPILE AGDA2HS fo2soTm #-}
