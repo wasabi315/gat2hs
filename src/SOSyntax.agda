@@ -42,7 +42,6 @@ postulate
 lam = Lam; {-# INLINE lam #-}
 app = App; {-# INLINE app #-}
 
-
 postulate
   Πβ : app (lam t[_]) u ≡ t[ u ]
   {-# REWRITE Πβ #-}

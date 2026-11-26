@@ -11,7 +11,7 @@ import SOSyntax
 
 open import Utils
 open import Agda.Builtin.Equality.Rewrite
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; init; last )
 open import SOSyntax
 
 data Tel : Set
@@ -29,8 +29,16 @@ data Env• : Set where
   ENil : Env•
 pattern ε = ENil
 
-data Env▷ (@0 A : Set) (@0 B : A → Set) : Set where
-  ESnoc : (δ : A) → B δ → Env▷ A B
+-- justifiable because the guarded under pattern matching on the context
+{-# ETA_EQUALITY #-}
+record Env▷ (@0 A : Set) (@0 B : A → Set) : Set where
+  inductive
+  constructor ESnoc
+  field
+    efst : A
+    esnd : B efst
+open Env▷ public
+
 pattern _,_ δ t = ESnoc δ t
 
 Env' TNil    = Env•
@@ -44,16 +52,7 @@ variable
   @0 Γ Δ Θ : Tel
   @0 δ σ γ : Env _
 
-efst : Env (Γ ▷ A[_]) → Env Γ
-efst (ESnoc ρ t) = ρ
-{-# COMPILE AGDA2HS efst #-}
-
 π₁ = efst; {-# INLINE efst #-}
-
-esnd : (ρ : Env (Γ ▷ A[_])) → Tm (A[ efst ρ ])
-esnd (ESnoc ρ t) = t
-{-# COMPILE AGDA2HS esnd #-}
-
 π₂ = esnd; {-# INLINE esnd #-}
 
 {-# FOREIGN AGDA2HS
@@ -64,7 +63,10 @@ data Tel
 
 data Env
   = ENil
-  | ESnoc Env Tm
+  | ESnoc
+  { efst :: Env
+  , esnd :: Tm
+  }
 
 #-}
 
@@ -74,6 +76,8 @@ data Env
 {-# COMPILE AGDA2HS TSnoc  existing #-}
 {-# COMPILE AGDA2HS ENil   existing #-}
 {-# COMPILE AGDA2HS ESnoc  existing #-}
+{-# COMPILE AGDA2HS efst   existing #-}
+{-# COMPILE AGDA2HS esnd   existing #-}
 
 {-# COMPILE AGDA2HS π₁ inline #-}
 {-# COMPILE AGDA2HS π₂ inline #-}
