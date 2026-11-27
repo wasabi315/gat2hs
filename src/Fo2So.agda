@@ -156,6 +156,20 @@ code : Ty Γ i → Tm Γ (_U i)
 code a = λ ρ → SO.Code (a ρ)
 {-# COMPILE AGDA2HS code #-}
 
+lift : Ty Γ i → Ty Γ (suc i)
+lift a = λ ρ → SO.Lift (a ρ)
+{-# COMPILE AGDA2HS lift #-}
+Lift = lift
+{-# COMPILE AGDA2HS Lift inline #-}
+
+raise : Tm Γ A → Tm Γ (Lift A)
+raise t = λ ρ → SO.raise (t ρ)
+{-# COMPILE AGDA2HS raise #-}
+
+lower : Tm Γ (Lift A) → Tm Γ A
+lower t = λ ρ → SO.lower (t ρ)
+{-# COMPILE AGDA2HS lower #-}
+
 module Fo2So =
   Elim Ctx Sub Ty Tm
        id _⨾_ refl refl refl
@@ -167,6 +181,8 @@ module Fo2So =
        Π lam app refl refl refl refl Πη
        Σ pair fst snd refl refl refl refl refl refl refl
        _U el code refl refl refl refl refl
+       lift raise lower refl refl refl refl refl
+       tt
 
 fo2soCtx : FO.Ctx → Ctx
 fo2soCtx = Fo2So.elimCtx

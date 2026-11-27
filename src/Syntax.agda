@@ -197,6 +197,26 @@ postulate
   Uη : Code (El t) ≡ t
   {-# REWRITE Uη #-}
 
+postulate
+  Lift : Ty Γ i → Ty Γ (suc i)
+  Raise : Tm Γ A → Tm Γ (Lift A)
+  Lower : Tm Γ (Lift A) → Tm Γ A
+raise = Raise; {-# INLINE raise #-}
+lower = Lower; {-# INLINE lower #-}
+
+postulate
+  Lift[] : Lift A [ δ ]T ≡ Lift (A [ δ ]T)
+  {-# REWRITE Lift[] #-}
+  raise[] : raise t [ δ ] ≡ raise (t [ δ ])
+  {-# REWRITE raise[] #-}
+  lower[] : lower t [ δ ] ≡ lower (t [ δ ])
+  {-# REWRITE lower[] #-}
+
+  Liftβ : lower (raise t) ≡ t
+  {-# REWRITE Liftβ #-}
+  Liftη : raise (lower t) ≡ t
+  {-# REWRITE Liftη #-}
+
 {-# FOREIGN AGDA2HS
 
 data Sub
@@ -212,6 +232,7 @@ data Ty
   | Sigma Ty Ty
   | U
   | El Tm
+  | Lift Ty
 
 data Tm
   = TmSub Tm Sub
@@ -222,6 +243,8 @@ data Tm
   | Fst Tm
   | Snd Tm
   | Code Ty
+  | Raise Tm
+  | Lower Tm
 
 #-}
 
@@ -247,6 +270,9 @@ data Tm
 {-# COMPILE AGDA2HS U     existing #-}
 {-# COMPILE AGDA2HS El    existing #-}
 {-# COMPILE AGDA2HS Code  existing #-}
+{-# COMPILE AGDA2HS Lift  existing #-}
+{-# COMPILE AGDA2HS Raise existing #-}
+{-# COMPILE AGDA2HS Lower existing #-}
 
 {-# COMPILE AGDA2HS id    inline #-}
 {-# COMPILE AGDA2HS _⨾_   inline #-}
@@ -263,3 +289,5 @@ data Tm
 {-# COMPILE AGDA2HS pair  inline #-}
 {-# COMPILE AGDA2HS fst   inline #-}
 {-# COMPILE AGDA2HS snd   inline #-}
+{-# COMPILE AGDA2HS raise inline #-}
+{-# COMPILE AGDA2HS lower inline #-}

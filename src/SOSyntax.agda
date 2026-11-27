@@ -80,6 +80,19 @@ postulate
   Uη : Code (El t) ≡ t
   {-# REWRITE Uη #-}
 
+postulate
+  Lift  : Ty i → Ty (suc i)
+  Raise : Tm A → Tm (Lift A)
+  Lower : Tm (Lift A) → Tm A
+raise = Raise; {-# INLINE raise #-}
+lower = Lower; {-# INLINE lower #-}
+
+postulate
+  Liftβ : lower (raise t) ≡ t
+  {-# REWRITE Liftβ #-}
+  Liftη : raise (lower t) ≡ t
+  {-# REWRITE Liftη #-}
+
 {-# FOREIGN AGDA2HS
 
 data Ty
@@ -87,6 +100,7 @@ data Ty
   | Sigma Ty (Tm -> Ty)
   | U
   | El Tm
+  | Lift Ty
 
 data Tm
   = Lam (Tm -> Tm)
@@ -95,6 +109,8 @@ data Tm
   | Fst Tm
   | Snd Tm
   | Code Ty
+  | Raise Tm
+  | Lower Tm
 
 #-}
 
@@ -110,11 +126,16 @@ data Tm
 {-# COMPILE AGDA2HS U     existing #-}
 {-# COMPILE AGDA2HS El    existing #-}
 {-# COMPILE AGDA2HS Code  existing #-}
+{-# COMPILE AGDA2HS Lift  existing #-}
+{-# COMPILE AGDA2HS Raise existing #-}
+{-# COMPILE AGDA2HS Lower existing #-}
 
-{-# COMPILE AGDA2HS Π    inline #-}
-{-# COMPILE AGDA2HS lam  inline #-}
-{-# COMPILE AGDA2HS app  inline #-}
-{-# COMPILE AGDA2HS Σ    inline #-}
-{-# COMPILE AGDA2HS pair inline #-}
-{-# COMPILE AGDA2HS fst  inline #-}
-{-# COMPILE AGDA2HS snd  inline #-}
+{-# COMPILE AGDA2HS Π     inline #-}
+{-# COMPILE AGDA2HS lam   inline #-}
+{-# COMPILE AGDA2HS app   inline #-}
+{-# COMPILE AGDA2HS Σ     inline #-}
+{-# COMPILE AGDA2HS pair  inline #-}
+{-# COMPILE AGDA2HS fst   inline #-}
+{-# COMPILE AGDA2HS snd   inline #-}
+{-# COMPILE AGDA2HS raise inline #-}
+{-# COMPILE AGDA2HS lower inline #-}
