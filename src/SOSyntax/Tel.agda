@@ -20,7 +20,7 @@ Env' : Tel → Type
 
 data Tel where
   TNil  : Tel
-  TSnoc : (Γ : Tel) → (Env' Γ → Ty) → Tel
+  TSnoc : (Γ : Tel) → (Env' Γ → Ty i) → Tel
 
 pattern • = TNil
 pattern _▷_ Γ A[_] = TSnoc Γ A[_]

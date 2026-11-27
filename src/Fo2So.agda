@@ -12,7 +12,7 @@ module Fo2So where
 open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; pi; fst; snd )
 import Syntax as FO
 open import Syntax.StrictElim
-import SOSyntax as SO
+open import SOSyntax as SO using (i)
 import SOSyntax.Tel as SO
 
 {-# FOREIGN AGDA2HS
@@ -28,11 +28,11 @@ Ctx : Type
 Ctx = SO.Tel
 {-# COMPILE AGDA2HS Ctx #-}
 
-Ty : @0 Ctx → Type
-Ty Γ = SO.Env Γ → SO.Ty
+Ty : @0 Ctx → @0 Nat → Type
+Ty Γ i = SO.Env Γ → SO.Ty i
 {-# COMPILE AGDA2HS Ty #-}
 
-Tm : (@0 Γ : Ctx) → @0 Ty Γ → Type
+Tm : (@0 Γ : Ctx) → @0 Ty Γ SO.i → Type
 Tm Γ A = (ρ : SO.Env Γ) → SO.Tm (A ρ)
 {-# COMPILE AGDA2HS Tm #-}
 
@@ -42,9 +42,9 @@ Sub Δ Γ = SO.Env Δ → SO.Env Γ
 
 variable
   @0 Γ Δ Θ : Ctx
-  @0 A B C : Ty _
-  @0 t u v : Tm _ _
-  @0 δ σ γ : Sub _ _
+  @0 A B C : Ty Γ i
+  @0 t u v : Tm Γ A
+  @0 δ σ γ : Sub Δ Γ
 
 cnil : Ctx
 cnil = SO.•
@@ -52,7 +52,7 @@ cnil = SO.•
 • = cnil
 {-# COMPILE AGDA2HS • inline #-}
 
-_▷_ : (Γ : Ctx) → Ty Γ → Ctx
+_▷_ : (Γ : Ctx) → Ty Γ i → Ctx
 _▷_ = SO._▷_
 {-# COMPILE AGDA2HS _▷_ #-}
 
@@ -68,7 +68,7 @@ _⨾_ : Sub Δ Γ → Sub Θ Δ → Sub Θ Γ
 _⨾_ δ σ = λ ρ → δ (σ ρ)
 {-# COMPILE AGDA2HS _⨾_ #-}
 
-tysub : Ty Γ → Sub Δ Γ → Ty Δ
+tysub : Ty Γ i → Sub Δ Γ → Ty Δ i
 tysub a sub = λ env → a (sub env)
 {-# COMPILE AGDA2HS tysub #-}
 _[_]T = tysub
@@ -80,7 +80,7 @@ tmsub t sub = λ env → t (sub env)
 _[_] = tmsub
 {-# COMPILE AGDA2HS _[_] inline #-}
 
-_^_ : ∀ δ A → Sub (Δ ▷ (A [ δ ]T)) (Γ ▷ A)
+_^_ : ∀ δ (A : Ty Γ i) → Sub (Δ ▷ (A [ δ ]T)) (Γ ▷ A)
 δ ^ _ = λ ρ → δ (SO.π₁ ρ) SO., SO.π₂ ρ
 {-# COMPILE AGDA2HS _^_ #-}
 
@@ -101,10 +101,10 @@ _ = refl
 π₂ δ = λ ρ → SO.π₂ (δ ρ)
 {-# COMPILE AGDA2HS π₂ #-}
 
-_ : {δ : Sub Δ Γ} {t : Tm Δ (A [ δ ]T)} → π₂ {A = A} (δ , t) ≡ t
+_ : {δ : Sub Δ Γ} {A : Ty Γ i} {t : Tm Δ (A [ δ ]T)} → π₂ {A = A} (δ , t) ≡ t
 _ = refl
 
-pi : ∀ A → Ty (Γ ▷ A) → Ty Γ
+pi : (A : Ty Γ i) → Ty (Γ ▷ A) i → Ty Γ i
 pi a b = λ ρ → SO.Π (a ρ) λ τ → b (ρ SO., τ)
 {-# COMPILE AGDA2HS pi #-}
 Π = pi
@@ -120,39 +120,39 @@ app t u = λ ρ → SO.app (t ρ) (u ρ)
 
 postulate
   •η : {δ : Sub Γ •} → δ ≡ ε
-  Πη : {t : Tm Γ (Π A B)} → _≡_ {A = Tm Γ (Π A B)} t (λ ρ → SO.lam (SO.app (t ρ)))
+  Πη : {t : Tm {i} Γ (Π A B)} → _≡_ {A = Tm Γ (Π A B)} t (λ ρ → SO.lam (SO.app (t ρ)))
 
-_ : {t : Tm (Γ ▷ A) B} {u : Tm Γ A}
+_ : {t : Tm {i} (Γ ▷ A) B} {u : Tm Γ A}
   → app {B = B} (lam t) u ≡ λ ρ → SO.app (SO.lam (λ τ → t (ρ SO., τ))) (u ρ)
 _ = refl
 
-sigma : ∀ A → Ty (Γ ▷ A) → Ty Γ
+sigma : (A : Ty Γ i) → Ty (Γ ▷ A) i → Ty Γ i
 sigma a b = λ ρ → SO.Σ (a ρ) λ τ → b (ρ SO., τ)
 {-# COMPILE AGDA2HS sigma #-}
 Σ = sigma
 {-# COMPILE AGDA2HS Σ inline #-}
 
-pair : (@0 B : Ty (Γ ▷ A)) → (t : Tm Γ A) → Tm Γ (B [ id , t ]T) → Tm Γ (Σ A B)
+pair : (@0 B : Ty (Γ ▷ A) i) → (t : Tm Γ A) → Tm Γ (B [ id , t ]T) → Tm Γ (Σ A B)
 pair B t u = λ ρ → SO.pair (t ρ) (u ρ)
 {-# COMPILE AGDA2HS pair #-}
 
-fst : Tm Γ (Σ A B) → Tm Γ A
+fst : Tm {i} Γ (Σ A B) → Tm Γ A
 fst t = λ ρ → SO.fst (t ρ)
 {-# COMPILE AGDA2HS fst #-}
 
-snd : (t : Tm Γ (Σ A B)) → Tm Γ (B [ id , fst t ]T)
+snd : (t : Tm {i} Γ (Σ A B)) → Tm Γ (B [ id , fst t ]T)
 snd t = λ ρ → SO.snd (t ρ)
 {-# COMPILE AGDA2HS snd #-}
 
-_U : Ty Γ
-_U = λ ρ → SO.U
+_U : ∀ (@0 i) → Ty Γ (suc i)
+_U i = λ ρ → SO.U i
 {-# COMPILE AGDA2HS _U #-}
 
-el : Tm Γ _U → Ty Γ
+el : Tm Γ (_U i) → Ty Γ i
 el t = λ ρ → SO.El (t ρ)
 {-# COMPILE AGDA2HS el #-}
 
-code : Ty Γ → Tm Γ _U
+code : Ty Γ i → Tm Γ (_U i)
 code a = λ ρ → SO.Code (a ρ)
 {-# COMPILE AGDA2HS code #-}
 
@@ -176,7 +176,7 @@ fo2soSub : FO.Sub FO.Δ FO.Γ → Sub (fo2soCtx FO.Δ) (fo2soCtx FO.Γ)
 fo2soSub = Fo2So.elimSub
 {-# COMPILE AGDA2HS fo2soSub #-}
 
-fo2soTy : FO.Ty FO.Γ → Ty (fo2soCtx FO.Γ)
+fo2soTy : FO.Ty FO.Γ i → Ty (fo2soCtx FO.Γ) i
 fo2soTy = Fo2So.elimTy
 {-# COMPILE AGDA2HS fo2soTy #-}
 

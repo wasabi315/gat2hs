@@ -17,28 +17,31 @@ import Prelude hiding ( (^) )
 
 --------------------------------------------------------------------------------
 
+variable
+  @0 i : Nat
+
 postulate
-  Ty : Type
-  Tm : @0 Ty → Type
+  Ty : @0 Nat → Type
+  Tm : @0 Ty i → Type
 
 private variable
   ？ : Set _
 
 variable
-  @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃  : Ty
-  @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm _
-  @0 A[_] B[_] : ？ → Ty
+  @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃  : Ty i
+  @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm A
+  @0 A[_] B[_] : ？ → Ty i
   @0 t[_] u[_] : (□ : ？) → Tm A[ □ ]
 
 -- Dependent functions
 -- We use binary application because it behaves better with rewriting
 postulate
-  Pi    : (A : Ty) → (Tm A → Ty) → Ty
+  Pi : (A : Ty i) → (Tm A → Ty i) → Ty i
 Π = Pi; {-# INLINE Π #-}
 
 postulate
-  Lam   : ((t : Tm A) → Tm (B[ t ])) → Tm (Π A B[_])
-  App   : Tm (Π A B[_]) → (u : Tm A) → Tm (B[ u ])
+  Lam : ((t : Tm A) → Tm (B[ t ])) → Tm (Π A B[_])
+  App : Tm (Π A B[_]) → (u : Tm A) → Tm (B[ u ])
 lam = Lam; {-# INLINE lam #-}
 app = App; {-# INLINE app #-}
 
@@ -48,7 +51,7 @@ postulate
   Πη : {t : Tm (Π A B[_])} → t ≡ lam λ u → app t u
 
 postulate
-  Sigma : (A : Ty) → (Tm A → Ty) → Ty
+  Sigma : (A : Ty i) → (Tm A → Ty i) → Ty i
 Σ = Sigma; {-# INLINE Π #-}
 
 postulate
@@ -68,9 +71,9 @@ postulate
   {-# REWRITE Ση #-}
 
 postulate
-  U    : Ty
-  El   : Tm U → Ty
-  Code : Ty → Tm U
+  U    : (@0 i : Nat) → Ty (suc i)
+  El   : Tm (U i) → Ty i
+  Code : Ty i → Tm (U i)
 
   Uβ : El (Code A) ≡ A
   {-# REWRITE Uβ #-}
