@@ -38,9 +38,9 @@ data Nf where
        → Nf Γ (I.Σ A B) (I.pair B t u)
   Code : TyNf Γ i A → Nf Γ (I.U i) (I.Code A)
 
-pattern neU t     = NeU t
-pattern lam t     = Lam t
-pattern lam B t u = Lam B t u
+pattern neU t      = NeU t
+pattern lam t      = Lam t
+pattern pair B t u = Pair B t u
 
 data TyNf where
   Π    : TyNf Γ i A → TyNf (Γ I.▷ A) i B → TyNf Γ i (I.Π A B)
