@@ -34,11 +34,12 @@ data Ctx where
 pattern • = CNil
 pattern _▷_ Γ A = CSnoc Γ A
 
-variable
-  @0 Γ Δ Θ Λ Γ₁ Γ₂ Δ₁ Δ₂ Θ₁ Θ₂ : Ctx
-  @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃ : Ty Γ i
-  @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm Γ A
-  @0 δ σ γ δ₁ δ₂ : Sub Δ Γ
+module Vars where variable
+    @0 Γ Δ Θ Λ Γ₁ Γ₂ Δ₁ Δ₂ Θ₁ Θ₂ : Ctx
+    @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃ : Ty Γ i
+    @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm Γ A
+    @0 δ σ γ δ₁ δ₂ : Sub Δ Γ
+open Vars public
 
 postulate
   SId   : Sub Γ Γ

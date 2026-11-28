@@ -2,7 +2,10 @@
 
 module Everything where
 
-open import Syntax
-open import Syntax.StrictElim
-open import SOSyntax
-open import Fo2So
+import Syntax
+import Syntax.StrictElim
+import SOSyntax
+import Fo2So
+import Nf.Common
+import Nf.Traditional
+import Nf.Spinal

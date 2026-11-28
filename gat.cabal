@@ -26,6 +26,9 @@ library
                       SOSyntax
                       SOSyntax.Tel
                       Fo2So
+                      Nf.Common
+                      Nf.Traditional
+                      Nf.Spinal
                       Everything
     build-depends:    base >=4.21 && <5
                     , containers
