@@ -49,6 +49,6 @@ data TyNf where
   El   : Ne Γ (I.U i) t → TyNf Γ i (I.El t)
   Lift : TyNf Γ i A → TyNf Γ (suc i) (I.Lift A)
 
-{-# COMPILE AGDA2HS Ne #-}
-{-# COMPILE AGDA2HS Nf #-}
+{-# COMPILE AGDA2HS Ne   #-}
+{-# COMPILE AGDA2HS Nf   #-}
 {-# COMPILE AGDA2HS TyNf #-}

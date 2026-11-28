@@ -50,3 +50,8 @@ data TyNf where
   U    : (i : Nat) → TyNf Γ (suc i) (I.U i)
   El   : Var Γ A t → Sp Γ A (I.U i) t u → TyNf Γ i (I.El u)
   Lift : TyNf Γ i A → TyNf Γ (suc i) (I.Lift A)
+
+{-# COMPILE AGDA2HS Sp   #-}
+{-# COMPILE AGDA2HS Elim #-}
+{-# COMPILE AGDA2HS Nf   #-}
+{-# COMPILE AGDA2HS TyNf #-}
