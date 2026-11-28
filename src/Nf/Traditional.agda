@@ -32,14 +32,12 @@ pattern snd t   = Snd t
 pattern lower t = Lower t
 
 data Nf where
-  NeU   : Ne Γ (I.U i) t → Nf Γ (I.U i) t
   Lam   : Nf (Γ I.▷ A) B t → Nf Γ (I.Π A B) (I.lam t)
   Pair  : TyNf (Γ I.▷ A) i B → Nf Γ A t → Nf Γ (B I.[ I.id I., t ]T) u
         → Nf Γ (I.Σ A B) (I.pair B t u)
   Code  : TyNf Γ i A → Nf Γ (I.U i) (I.Code A)
   Raise : Nf Γ A t → Nf Γ (I.Lift A) (I.raise t)
 
-pattern neU t      = NeU t
 pattern lam t      = Lam t
 pattern pair B t u = Pair B t u
 pattern raise t    = Raise t
@@ -48,7 +46,7 @@ data TyNf where
   Π    : TyNf Γ i A → TyNf (Γ I.▷ A) i B → TyNf Γ i (I.Π A B)
   Σ    : TyNf Γ i A → TyNf (Γ I.▷ A) i B → TyNf Γ i (I.Σ A B)
   U    : (i : Nat) → TyNf Γ (suc i) (I.U i)
-  El   : Nf Γ (I.U i) t → TyNf Γ i (I.El t)
+  El   : Ne Γ (I.U i) t → TyNf Γ i (I.El t)
   Lift : TyNf Γ i A → TyNf Γ (suc i) (I.Lift A)
 
 {-# COMPILE AGDA2HS Ne #-}
