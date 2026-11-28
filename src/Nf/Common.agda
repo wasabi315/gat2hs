@@ -12,7 +12,7 @@ import Syntax as I
 open I.Vars
 
 variable
-  @0 i : Nat
+  @0 i j : Nat
 
 data Var : (@0 Γ : I.Ctx) (@0 A : I.Ty Γ i) (@0 tᴵ : I.Tm Γ A) → Set where
   Vz : Var (Γ I.▷ A) (A I.[ I.wk ]T) I.vz
