@@ -45,7 +45,7 @@ pattern raise t    = Raise t
 data TyNf where
   Π    : TyNf Γ i A → TyNf (Γ I.▷ A) i B → TyNf Γ i (I.Π A B)
   Σ    : TyNf Γ i A → TyNf (Γ I.▷ A) i B → TyNf Γ i (I.Σ A B)
-  U    : (i : Nat) → TyNf Γ (suc i) (I.U i)
+  U    : (@0 i : Nat) → TyNf Γ (suc i) (I.U i)
   El   : Ne Γ (I.U i) t → TyNf Γ i (I.El t)
   Lift : TyNf Γ i A → TyNf Γ (suc i) (I.Lift A)
 
