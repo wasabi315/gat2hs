@@ -20,7 +20,6 @@ record VarSp (@0 Γ : I.Ctx) (@0 A : I.Ty Γ i) (@0 t : I.Tm Γ A) : Type where
     @0 {varTm}  : I.Tm Γ varTy
     var         : Var Γ varTy varTm
     spine       : Sp.Sp Γ varTy A varTm t
-
 open VarSp public
 {-# COMPILE AGDA2HS VarSp tuple #-}
 
@@ -33,7 +32,7 @@ toSpNf (Tr.pair b t u) = Sp.pair (toSpTyNf b) (toSpNf t) (toSpNf u)
 toSpNf (Tr.Code a)     = Sp.Code (toSpTyNf a)
 toSpNf (Tr.raise t)    = Sp.raise (toSpNf t)
 
-toSpNe (Tr.VarNe x) δ = VarSp.constructor x δ
+toSpNe (Tr.VarNe x) δ = record {var = x; spine = δ}
 toSpNe (Tr.App t u) δ = toSpNe t (Sp.App (toSpNf u) Sp.,- δ)
 toSpNe (Tr.Fst t)   δ = toSpNe t (Sp.Fst Sp.,- δ)
 toSpNe (Tr.Snd t)   δ = toSpNe t (Sp.Snd Sp.,- δ)
@@ -44,7 +43,7 @@ toSpTyNf (Tr.Σ a b)  = Sp.Σ (toSpTyNf a) (toSpTyNf b)
 toSpTyNf (Tr.U i)    = Sp.U i
 toSpTyNf (Tr.Lift a) = Sp.Lift (toSpTyNf a)
 toSpTyNf (Tr.El t)   = case toSpNe t Sp.[] of λ where
-  (VarSp.constructor x δ) → Sp.El x δ
+  record {var = x; spine = δ} → Sp.El x δ
 
 {-# COMPILE AGDA2HS toSpNf   #-}
 {-# COMPILE AGDA2HS toSpNe   #-}
