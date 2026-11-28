@@ -10,7 +10,7 @@ module Syntax where
 #-}
 
 open import Agda.Builtin.Equality.Rewrite renaming ( primRewriteNoMatch to ⟨_⟩ )
-open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_ )
+open import Haskell.Prelude hiding ( id; a; b; c; d; e; f; m; s; t; _,_; fst; snd )
 
 {-# FOREIGN AGDA2HS
 import Prelude hiding ( (^) )
@@ -18,24 +18,27 @@ import Prelude hiding ( (^) )
 
 --------------------------------------------------------------------------------
 
+variable
+  @0 i : Nat
+
 data Ctx : Type
 
 postulate
   Sub : @0 Ctx → @0 Ctx → Type
-  Ty  : @0 Ctx → Type
-  Tm  : (@0 Γ : Ctx) → @0 Ty Γ → Type
+  Ty  : @0 Ctx → @0 Nat → Type
+  Tm  : (@0 Γ : Ctx) → @0 Ty Γ i → Type
 
 data Ctx where
   CNil  : Ctx
-  CSnoc : (Γ : Ctx) → Ty Γ → Ctx
+  CSnoc : (Γ : Ctx) → Ty Γ i → Ctx
 pattern • = CNil
 pattern _▷_ Γ A = CSnoc Γ A
 
 variable
   @0 Γ Δ Θ Λ Γ₁ Γ₂ Δ₁ Δ₂ Θ₁ Θ₂ : Ctx
-  @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃ : Ty _
-  @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm _ _
-  @0 δ σ γ δ₁ δ₂ : Sub _ _
+  @0 A B C D A₁ A₂ A₃ B₁ B₂ B₃ : Ty Γ i
+  @0 t u v t₁ t₂ t₃ u₁ u₂ u₃ : Tm Γ A
+  @0 δ σ γ δ₁ δ₂ : Sub Δ Γ
 
 postulate
   SId   : Sub Γ Γ
@@ -53,7 +56,7 @@ postulate
   {-# REWRITE ⨾⨾ #-}
 
 postulate
-  TySub : Ty Γ → Sub Δ Γ → Ty Δ
+  TySub : Ty Γ i → Sub Δ Γ → Ty Δ i
 _[_]T = TySub; {-# INLINE _[_]T #-}
 
 postulate
@@ -74,7 +77,7 @@ postulate
 
 -- Context comprehension
 postulate
-  SNil  : Sub Δ •
+  SNil : Sub Δ •
 ε = SNil; {-# INLINE ε #-}
 
 postulate
@@ -85,11 +88,11 @@ postulate
 _,_ = SSnoc; {-# INLINE _,_ #-}
 
 postulate
-  SFst  : Sub Δ (Γ ▷ A) → Sub Δ Γ
+  SFst : Sub Δ (Γ ▷ A) → Sub Δ Γ
 π₁ = SFst; {-# INLINE π₁ #-}
 
 postulate
-  SSnd  : (δ : Sub Δ (Γ ▷ A)) → Tm Δ (A [ π₁ δ ]T)
+  SSnd : (δ : Sub Δ (Γ ▷ A)) → Tm Δ (A [ π₁ δ ]T)
 π₂ = SSnd; {-# INLINE π₂ #-}
 
 postulate
@@ -111,12 +114,12 @@ postulate
 -- Dependent functions
 -- We use binary application because it behaves better with rewriting
 postulate
-  Pi    : ∀ A → Ty (Γ ▷ A) → Ty Γ
+  Pi : (A : Ty Γ i) → Ty (Γ ▷ A) i → Ty Γ i
 Π = Pi; {-# INLINE Π #-}
 
 postulate
-  Lam   : Tm (Γ ▷ A) B → Tm Γ (Π A B)
-  App   : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
+  Lam : Tm (Γ ▷ A) B → Tm Γ (Π A B)
+  App : Tm Γ (Π A B) → (u : Tm Γ A) → Tm Γ (B [ id , u ]T)
 lam = Lam; {-# INLINE lam #-}
 app = App; {-# INLINE app #-}
 
@@ -128,7 +131,7 @@ vz : Tm (Γ ▷ A) (A [ wk ]T)
 vz = π₂ id
 {-# COMPILE AGDA2HS vz #-}
 
-_^_ : ∀ δ A → Sub (Δ ▷ (A [ δ ]T)) (Γ ▷ A)
+_^_ : ∀ δ (A : Ty Γ i) → Sub (Δ ▷ (A [ δ ]T)) (Γ ▷ A)
 δ ^ _ = (δ ⨾ wk) , vz
 {-# COMPILE AGDA2HS _^_ #-}
 
@@ -143,7 +146,76 @@ postulate
 
   Πβ : app (lam t) u ≡ t [ id , u ]
   {-# REWRITE Πβ #-}
-  Πη : {t : Tm Γ (Π A B)} → t ≡ lam (app (t [ wk ]) vz)
+  Πη : {t : Tm {i} Γ (Π A B)} → t ≡ lam (app (t [ wk ]) vz)
+
+-- Dependent pairs
+postulate
+  Sigma : (A : Ty Γ i) → Ty (Γ ▷ A) i → Ty Γ i
+Σ = Sigma; {-# INLINE Σ #-}
+
+postulate
+  Pair : (@0 B : Ty (Γ ▷ A) i) → (t : Tm Γ A) → Tm Γ (B [ id , t ]T) → Tm Γ (Σ A B)
+  Fst  : Tm Γ (Σ A B) → Tm Γ A
+  Snd  : (t : Tm Γ (Σ A B)) → Tm Γ (B [ id , Fst t ]T)
+pair = Pair; {-# INLINE pair #-}
+fst  = Fst;  {-# INLINE fst  #-}
+snd  = Snd;  {-# INLINE snd  #-}
+
+postulate
+  Σ[]  : Σ A B [ δ ]T ≡ Σ (A [ δ ]T) (B [ δ ^ A ]T)
+  {-# REWRITE Σ[] #-}
+  pair[] : {δ : Sub Δ Γ}
+         → pair B t u [ δ ] ≡ pair (B [ δ ^ A ]T) (t [ δ ]) (u [ δ ])
+  {-# REWRITE pair[] #-}
+  fst[] : fst {B = B} t [ δ ] ≡ fst (t [ δ ])
+  {-# REWRITE fst[] #-}
+  snd[] : {δ : Sub Δ Γ} → _[_] {A = ⟨ _ ⟩} (snd t) δ ≡ snd (t [ δ ])
+  {-# REWRITE snd[] #-}
+
+  Σβ₁ : fst (pair B t u) ≡ t
+  {-# REWRITE Σβ₁ #-}
+  Σβ₂ : snd (pair B t u) ≡ u
+  {-# REWRITE Σβ₂ #-}
+  Ση : pair B (fst t) (snd t) ≡ t
+  {-# REWRITE Ση #-}
+
+-- Universe
+postulate
+  U    : ∀ (@0 i) → Ty Γ (suc i)
+  El   : Tm Γ (U i) → Ty Γ i
+  Code : Ty Γ i → Tm Γ (U i)
+
+  U[] : U i [ δ ]T ≡ U i
+  {-# REWRITE U[] #-}
+  El[] : El t [ δ ]T ≡ El (t [ δ ])
+  {-# REWRITE El[] #-}
+  Code[] : Code A [ δ ] ≡ Code (A [ δ ]T)
+  {-# REWRITE Code[] #-}
+
+  Uβ : El (Code A) ≡ A
+  {-# REWRITE Uβ #-}
+  Uη : Code (El t) ≡ t
+  {-# REWRITE Uη #-}
+
+postulate
+  Lift : Ty Γ i → Ty Γ (suc i)
+  Raise : Tm Γ A → Tm Γ (Lift A)
+  Lower : Tm Γ (Lift A) → Tm Γ A
+raise = Raise; {-# INLINE raise #-}
+lower = Lower; {-# INLINE lower #-}
+
+postulate
+  Lift[] : Lift A [ δ ]T ≡ Lift (A [ δ ]T)
+  {-# REWRITE Lift[] #-}
+  raise[] : raise t [ δ ] ≡ raise (t [ δ ])
+  {-# REWRITE raise[] #-}
+  lower[] : lower t [ δ ] ≡ lower (t [ δ ])
+  {-# REWRITE lower[] #-}
+
+  Liftβ : lower (raise t) ≡ t
+  {-# REWRITE Liftβ #-}
+  Liftη : raise (lower t) ≡ t
+  {-# REWRITE Liftη #-}
 
 {-# FOREIGN AGDA2HS
 
@@ -157,12 +229,22 @@ data Sub
 data Ty
   = TySub Ty Sub
   | Pi Ty Ty
+  | Sigma Ty Ty
+  | U
+  | El Tm
+  | Lift Ty
 
 data Tm
   = TmSub Tm Sub
   | SSnd Sub
   | Lam Tm
   | App Tm Tm
+  | Pair Tm Tm
+  | Fst Tm
+  | Snd Tm
+  | Code Ty
+  | Raise Tm
+  | Lower Tm
 
 #-}
 
@@ -181,6 +263,16 @@ data Tm
 {-# COMPILE AGDA2HS Pi    existing #-}
 {-# COMPILE AGDA2HS Lam   existing #-}
 {-# COMPILE AGDA2HS App   existing #-}
+{-# COMPILE AGDA2HS Sigma existing #-}
+{-# COMPILE AGDA2HS Pair  existing #-}
+{-# COMPILE AGDA2HS Fst   existing #-}
+{-# COMPILE AGDA2HS Snd   existing #-}
+{-# COMPILE AGDA2HS U     existing #-}
+{-# COMPILE AGDA2HS El    existing #-}
+{-# COMPILE AGDA2HS Code  existing #-}
+{-# COMPILE AGDA2HS Lift  existing #-}
+{-# COMPILE AGDA2HS Raise existing #-}
+{-# COMPILE AGDA2HS Lower existing #-}
 
 {-# COMPILE AGDA2HS id    inline #-}
 {-# COMPILE AGDA2HS _⨾_   inline #-}
@@ -193,3 +285,9 @@ data Tm
 {-# COMPILE AGDA2HS Π     inline #-}
 {-# COMPILE AGDA2HS lam   inline #-}
 {-# COMPILE AGDA2HS app   inline #-}
+{-# COMPILE AGDA2HS Σ     inline #-}
+{-# COMPILE AGDA2HS pair  inline #-}
+{-# COMPILE AGDA2HS fst   inline #-}
+{-# COMPILE AGDA2HS snd   inline #-}
+{-# COMPILE AGDA2HS raise inline #-}
+{-# COMPILE AGDA2HS lower inline #-}
