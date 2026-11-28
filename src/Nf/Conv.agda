@@ -8,13 +8,24 @@ import Nf.Traditional as Tr
 import Nf.Spinal as Sp
 open import Nf.Common
 
-open import Haskell.Prelude using (_×_; _,_; case_of_)
+open import Haskell.Prelude using (_×_; _,_; case_of_; Type; Nat)
 open import Haskell.Extra.Erase
 
 --------------------------------------------------------------------------------
 
+record VarSp (@0 Γ : I.Ctx) (@0 A : I.Ty Γ i) (@0 t : I.Tm Γ A) : Type where
+  field
+    @0 {varLvl} : Nat
+    @0 {varTy}  : I.Ty Γ varLvl
+    @0 {varTm}  : I.Tm Γ varTy
+    var         : Var Γ varTy varTm
+    spine       : Sp.Sp Γ varTy A varTm t
+
+open VarSp public
+{-# COMPILE AGDA2HS VarSp tuple #-}
+
 tr2SpNf   : Tr.Nf Γ A t → Sp.Nf Γ A t
-tr2SpNe   : Tr.Ne Γ A t → Sp.Sp Γ A B t u → Σ0 _ λ i → Σ0 _ λ C → Σ0 _ λ v → Var {i} Γ C v × Sp.Sp Γ C B v u
+tr2SpNe   : Tr.Ne Γ A t → Sp.Sp Γ A B t u → VarSp Γ B u
 tr2SpTyNf : Tr.TyNf Γ i A → Sp.TyNf Γ i A
 
 tr2SpNf (Tr.lam t)      = Sp.lam (tr2SpNf t)
@@ -22,7 +33,7 @@ tr2SpNf (Tr.pair b t u) = Sp.pair (tr2SpTyNf b) (tr2SpNf t) (tr2SpNf u)
 tr2SpNf (Tr.Code a)     = Sp.Code (tr2SpTyNf a)
 tr2SpNf (Tr.raise t)    = Sp.raise (tr2SpNf t)
 
-tr2SpNe (Tr.VarNe x) δ = < < < x , δ > > >
+tr2SpNe (Tr.VarNe x) δ = VarSp.constructor x δ
 tr2SpNe (Tr.App t u) δ = tr2SpNe t (Sp.App (tr2SpNf u) Sp.,- δ)
 tr2SpNe (Tr.Fst t)   δ = tr2SpNe t (Sp.Fst Sp.,- δ)
 tr2SpNe (Tr.Snd t)   δ = tr2SpNe t (Sp.Snd Sp.,- δ)
@@ -33,7 +44,7 @@ tr2SpTyNf (Tr.Σ a b)  = Sp.Σ (tr2SpTyNf a) (tr2SpTyNf b)
 tr2SpTyNf (Tr.U i)    = Sp.U i
 tr2SpTyNf (Tr.Lift a) = Sp.Lift (tr2SpTyNf a)
 tr2SpTyNf (Tr.El t)   = case tr2SpNe t Sp.[] of λ where
-  (< < < x , δ > > >) → Sp.El x δ
+  (VarSp.constructor x δ) → Sp.El x δ
 
 {-# COMPILE AGDA2HS tr2SpNf   #-}
 {-# COMPILE AGDA2HS tr2SpNe   #-}
