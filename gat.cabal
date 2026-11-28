@@ -29,7 +29,8 @@ library
                       Nf.Common
                       Nf.Traditional
                       Nf.Spinal
-                      Nf.Conv
+                      Nf.ToSpine
+                      Nf.FromSpine
                       Everything
     build-depends:    base >=4.21 && <5
                     , containers

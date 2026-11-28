@@ -9,4 +9,5 @@ import Fo2So
 import Nf.Common
 import Nf.Traditional
 import Nf.Spinal
-import Nf.Conv
+import Nf.ToSpine
+import Nf.FromSpine
